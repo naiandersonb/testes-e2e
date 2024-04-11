@@ -7,6 +7,7 @@ class RegisterForm {
     imageUrlInput: () => cy.get('#imageUrl'),
     urlFeedback: () => cy.get('#urlFeedback'),
     submitBtn: () => cy.get('#btnSubmit'),
+    cardList: () => cy.get('#card-list')
   }
 
   typeTitle(text) {
@@ -27,7 +28,7 @@ const registerForm = new RegisterForm()
 
 const colors = {
   errors: 'rgb(220, 53, 69)',
-  success: ''
+  success: "rgb(134, 183, 254)",
 }
 
 describe('Image Registration', () => {
@@ -69,5 +70,66 @@ describe('Image Registration', () => {
       })
     })
 
+  })
+
+  describe('Submitting an image with valid inputs using enter key', () => {
+    after(() => {
+      cy.clearAllLocalStorage()
+    })
+
+    const input = {
+      title: 'Alien BR',
+      url: 'https://cdn.mos.cms.futurecdn.net/eM9EvWyDxXcnQTTyH8c8p5-1200-80.jpg'
+    }
+
+    it('Given I am on the image registration page', () => {
+      cy.visit('/')
+    })
+
+    it('When I enter "Alien BR" in the title field', () => {
+      registerForm.typeTitle(input.title)
+    })
+    it('Then I should see a check icon in the title field', () => {
+      registerForm.elements.titleInput().should(([element]) => {
+        const styles = window.getComputedStyle(element)
+        const border = styles.getPropertyValue('border-right-color')
+        assert.strictEqual(border, colors.success)
+      })
+    })
+    it('When I enter "https://cdn.mos.cms.futurecdn.net/eM9EvWyDxXcnQTTyH8c8p5-1200-80.jpg" in the URL field', () => {
+      registerForm.typeUrl(input.url)
+    })
+    it('Then I should see a check icon in the imageUrl field', () => {
+      registerForm.elements.imageUrlInput().should(([element]) => {
+        const styles = window.getComputedStyle(element)
+        const border = styles.getPropertyValue('border-right-color')
+        assert.strictEqual(border, colors.success)
+      })
+    })
+    it('Then I can hit enter to submit the form', () => {
+      registerForm.submitForm()
+    })
+    it('And the list of registered images should be updated with the new item', () => {
+      cy.get('#card-list .card-img').should(elements => {
+        const lastElement = elements[elements.length -1]
+        const url = lastElement.getAttribute('src')
+        assert.strictEqual(url, input.url)
+      })
+    })
+    it('And the new item should be stored in the localStorage', () => {
+      cy.getAllLocalStorage().should(ls => {
+        const currentLs = ls[window.location.origin]
+        const elements = JSON.parse(Object.values(currentLs))
+        const lastElement = elements[elements.length - 1]
+       
+
+        assert.strictEqual(lastElement.title, input.title)
+        assert.strictEqual(lastElement.imageUrl, input.url)
+      })
+    })
+    it('Then The inputs should be cleared', () => {
+      registerForm.elements.titleInput().should('have.value', '')
+      registerForm.elements.imageUrlInput().should('have.value', '')
+    })
   })
 })
