@@ -132,4 +132,41 @@ describe('Image Registration', () => {
       registerForm.elements.imageUrlInput().should('have.value', '')
     })
   })
+
+  describe('Refreshing the page after submitting an image clicking in the submit button', () => {
+    after(() => {
+      cy.clearLocalStorage()
+    })
+
+    const input = {
+      title: 'Alien BR',
+      url: 'https://cdn.mos.cms.futurecdn.net/eM9EvWyDxXcnQTTyH8c8p5-1200-80.jpg'
+    }
+
+    it('Given I am on the image registration page', () => {
+      cy.visit('/')
+    })
+
+    it('I have submitted an image by clicking the submit button', () => {
+      registerForm.typeTitle(input.title)
+      registerForm.typeUrl(input.url)
+      registerForm.submitForm()
+      cy.wait(100)
+    })
+
+    it('I refresh the page', () => {
+      cy.reload();
+    })
+    it('I should still see the submitted image in the list of registered images', () => {
+      cy.getAllLocalStorage().should(ls => {
+        const currentLs = ls[window.location.origin]
+        const elements = JSON.parse(Object.values(currentLs))
+        const lastElement = elements[elements.length - 1]
+       
+
+        assert.strictEqual(lastElement.title, input.title)
+        assert.strictEqual(lastElement.imageUrl, input.url)
+      })
+    })
+  })
 })
